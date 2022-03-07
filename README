@@ -1,0 +1,44 @@
+Radu Cosmin 323 CB
+
+Tema 1 PC
+
+Am inceput cu parsarea tabelei de rutare, prin citirea din fisier linie cu
+linie folosind fgets. Apoi, folosind strtok, am separat linia si am convertit,
+acolo unde a fost nevoie folosind inet_addr, campurile pentru o intrare din
+strtuctura. Pentru o cautare eficienta in tabela, am sortat dupa prefix tabela,
+iar la cautare am folosit metoda cautarii binare.
+
+Pentru implementarea protocolului arp am verificat intai daca un pachet primit
+de router este de tip arp folosind functia parse_arp. Daca pachetul era arp,
+verificam apoi daca era de tip request sau reply. Daca era de tip reply,
+actualizam tabela arp adaugand o noua intrare in ea, iar apoi scoateam
+pachetele din coada si verificam daca exista pachete care trebuie trimise
+catre next hop-ul care a trimis reply. Daca nu trebuiau trimise acum, le puneam
+intr-o coada auxiliara, iar la final continutul cozii auxiliare il puneam in
+cea initiala. Daca un pachet trebuia dirijat acum, completam ether header-ul
+cu adresele mac ale router-ului si a next hop-ului si trimiteam pachetul.
+
+Daca pachetul arp era de tip request, completam ether header-ul cu adresa mac
+a router-ului de pe interfata pe care a venit request-ul si cu adresa mac a
+sender-ului, setam tipul header-ului la arp si trimiteam reply folosind
+send_arp. Adresele ip pentru send_arp le luam din pachetul original.
+
+Pentru procesul de dirijare am verificat intai daca exista ruta pana la
+destinatie, iar in caz negativ, trimiteam un mesaj icmp sursei. Apoi am
+verificat daca pachetul are ttl-ul mai mic decat 1, iar in caz afirmativ
+trimiteam un mesaj icmp catre sursa si aruncam pachetul. De asemenea, daca
+checksum-ul pachetului era gresit, aruncam pachetul.
+
+Daca un pachet trecea de testarile anterioare, ii decrementam ttl-ul,
+actualizam checksum-ul si cautam in tabela arp adresa mac a next hop-ului.
+Daca nu exista in tabela, trimiteam un arp request catre urmatorul hop,
+punand in ether header in campul pentru mac-ul destinatiei ff:ff:ff:ff:ff:ff,
+pentru a forta next hop-ul sa introduca adresa sa mac si puneam o copie a
+pachetului original intr-o coada. Daca adresa mac a destinatiei era cunoscuta,
+trimiteam pachetul mai departe.
+
+Pentru protocolul icmp, pe langa mesajele de eroare trimise in cazul in care
+ttl era mai mic decat 1 sau in cazul in care nu exista o ruta pana la
+destinatie, am mai verificat daca pachetul este de tip icmp echo adresat
+router-ului. Daca era de acest fel, trimiteam folosind functia send_icmp
+un echo reply.
